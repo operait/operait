@@ -14,7 +14,7 @@ export default function App() {
 
   async function loadConversations() {
     try {
-      const res = await fetch(`${API_BASE}/api/conversations`);
+      const res = await fetch(`${API_BASE}/conversations`);
       const data = await res.json();
       setConversations(data || []);
     } catch (e) {
@@ -25,7 +25,7 @@ export default function App() {
   async function loadMessages(id) {
     if (!id) { setMessages([]); return; }
     try {
-      const res = await fetch(`/api/messages/${id}`);
+      const res = await fetch(`/messages/${id}`);
       const data = await res.json();
       setMessages(data || []);
     } catch (e) {

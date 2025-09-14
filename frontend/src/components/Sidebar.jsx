@@ -44,7 +44,7 @@ export default function Sidebar({ open, onClose, conversations, activeId, onSele
               </button>
               <button className="icon-btn danger" onClick={async () => {
                 try {
-                  const res = await fetch(`/api/conversations/${c.id}`, { method: "DELETE" });
+                  const res = await fetch(`/conversations/${c.id}`, { method: "DELETE" });
                   const data = await res.json();
                   if (data.success) {
                     reload(); // refresh list

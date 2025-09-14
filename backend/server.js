@@ -18,9 +18,9 @@ app.get("/", (_req, res) => {
   res.type("text/plain").send("✅ Era backend with SSE+RAG is running");
 });
 
-app.use("/api/chat", chatRouter);
-app.use("/api/rag-chat", ragRouter);
-app.use("/api/conversations", conversationsRouter);
+app.use("/chat", chatRouter);
+app.use("/rag-chat", ragRouter);
+app.use("/conversations", conversationsRouter);
 
 app.use((req, res) => res.status(404).json({ error: "Not Found", path: req.path }));
 
