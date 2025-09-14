@@ -1,0 +1,398 @@
+{
+  "Attendance": [
+    {
+      "description": "Excessive attendance and/or tardiness issues (multiple days/shifts)",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "2+",
+        "2nd": "2+",
+        "3rd": "3+",
+        "4th": null
+      }
+    },
+    {
+      "description": "Unauthorized leave/early departure/late arrival",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "1+",
+        "2nd": "2+",
+        "3rd": "3+ ",
+        "4th": "3+"
+      }
+    },
+    {
+      "description": "Abandoning work/a shift",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "2+",
+        "2nd": "3+",
+        "3rd": "3+",
+        "4th": null
+      }
+    },
+    {
+      "description": "Leaving the work premise during work hours without obtaining permission from supervisor",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "2+",
+        "2nd": "3+",
+        "3rd": "3+",
+        "4th": null
+      }
+    },
+    {
+      "description": "Not returning to work following a break/lunch period",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "2+",
+        "2nd": "3+",
+        "3rd": "3+",
+        "4th": null
+      }
+    },
+    {
+      "description": "Walking out of work without explanation or permission",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "2+",
+        "2nd": "3+",
+        "3rd": "3+",
+        "4th": null
+      }
+    }
+  ],
+  "Performance": [
+    {
+      "description": "Not meeting performance goals",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "1+",
+        "2nd": "2+",
+        "3rd": "3+ ",
+        "4th": "3+"
+      }
+    },
+    {
+      "description": "Lack of customer service",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "1+",
+        "2nd": "2+",
+        "3rd": "3+ ",
+        "4th": "3+"
+      }
+    },
+    {
+      "description": "Failure to follow directions",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "1+",
+        "2nd": "2+",
+        "3rd": "3+ ",
+        "4th": "3+"
+      }
+    },
+    {
+      "description": "Failure to meet deadlines",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "1+",
+        "2nd": "2+",
+        "3rd": "3+ ",
+        "4th": "3+"
+      }
+    },
+    {
+      "description": "Negligence",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "1+",
+        "2nd": "2+",
+        "3rd": "3+ ",
+        "4th": "3+"
+      }
+    },
+    {
+      "description": "Inefficiency",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "1+",
+        "2nd": "2+",
+        "3rd": "3+ ",
+        "4th": "3+"
+      }
+    },
+    {
+      "description": "Incompetence/lack of skills necessary to perform the job",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "1+",
+        "2nd": "2+",
+        "3rd": "3+ ",
+        "4th": "3+"
+      }
+    },
+    {
+      "description": "Failure to report sexual misconduct or gender discrimination in violation of Title IX",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "3+",
+        "2nd": "3+",
+        "3rd": null,
+        "4th": null
+      }
+    }
+  ],
+  "Policy/Conduct": [
+    {
+      "description": "Sharing password(s) and/or system credential(s) to unauthorized individuals",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "1+",
+        "2nd": "3+",
+        "3rd": "3+",
+        "4th": null
+      }
+    },
+    {
+      "description": "Excessive mobile device use",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "1+",
+        "2nd": "2+",
+        "3rd": "3+",
+        "4th": "3+"
+      }
+    },
+    {
+      "description": "Unauthorized and willful or negligent destruction of property",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "3+",
+        "2nd": "3+",
+        "3rd": null,
+        "4th": null
+      }
+    },
+    {
+      "description": "Unprofessionalism",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "1+",
+        "2nd": "2+",
+        "3rd": "3+",
+        "4th": "3+"
+      }
+    },
+    {
+      "description": "Insubordination",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "2+",
+        "2nd": "3+",
+        "3rd": null,
+        "4th": null
+      }
+    },
+    {
+      "description": "Use of abusive/derogatory/profane language",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "1+",
+        "2nd": "3+",
+        "3rd": "3+",
+        "4th": null
+      }
+    },
+    {
+      "description": "Gross negligence resulting in safety hazards",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "2+",
+        "2nd": "3+",
+        "3rd": null,
+        "4th": null
+      }
+    },
+    {
+      "description": "Failure to report workplace hazards",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "1+",
+        "2nd": "3+",
+        "3rd": "3+",
+        "4th": null
+      }
+    },
+    {
+      "description": "Equal Opportunity Violation",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "3+",
+        "2nd": "3+",
+        "3rd": null,
+        "4th": null
+      }
+    },
+    {
+      "description": "Discrimination/Violation of Title VII",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "3+",
+        "2nd": "3+",
+        "3rd": null,
+        "4th": null
+      }
+    },
+    {
+      "description": "Sexual Harassment/Violation of Title IX ",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "3+",
+        "2nd": "3+",
+        "3rd": null,
+        "4th": null
+      }
+    },
+    {
+      "description": "Bullying",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "2+",
+        "2nd": "3+",
+        "3rd": "3+",
+        "4th": null
+      }
+    },
+    {
+      "description": "Violent behavior or threat of violence",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "4+",
+        "2nd": "4+",
+        "3rd": null,
+        "4th": null
+      }
+    },
+    {
+      "description": "Fraud",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "4+",
+        "2nd": "4+",
+        "3rd": null,
+        "4th": null
+      }
+    },
+    {
+      "description": "False request for reimbursement, or falsification of time card.",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "3+",
+        "2nd": "3+",
+        "3rd": null,
+        "4th": null
+      }
+    },
+    {
+      "description": "Willful falsification of documents/reports",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "3+",
+        "2nd": "3+",
+        "3rd": null,
+        "4th": null
+      }
+    },
+    {
+      "description": "Conflict of Interest violation/personal relationships",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "3+",
+        "2nd": "3+",
+        "3rd": null,
+        "4th": null
+      }
+    },
+    {
+      "description": "Theft",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "4+",
+        "2nd": "4+",
+        "3rd": null,
+        "4th": null
+      }
+    },
+    {
+      "description": "Impairment/possession/consumption of illegal drugs and/or alcohol during a shift.",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "4+",
+        "2nd": "4+",
+        "3rd": null,
+        "4th": null
+      }
+    },
+    {
+      "description": "Breach of confidentiality",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "3+",
+        "2nd": "3+",
+        "3rd": null,
+        "4th": null
+      }
+    },
+    {
+      "description": "Inappropriate use of access to information",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "3+",
+        "2nd": "3+",
+        "3rd": null,
+        "4th": null
+      }
+    },
+    {
+      "description": "Sharing confidential information with individuals who do not have a business need to know",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "3+",
+        "2nd": "3+",
+        "3rd": null,
+        "4th": null
+      }
+    },
+    {
+      "description": "Accessing/changing/falsifying personal record for gain",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "3+",
+        "2nd": "3+",
+        "3rd": null,
+        "4th": null
+      }
+    },
+    {
+      "description": "Criminal activity",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "4+",
+        "2nd": "4+",
+        "3rd": null,
+        "4th": null
+      }
+    },
+    {
+      "description": "Retaliation resulting in adverse action for protected activities",
+      "handbook_reference": null,
+      "offenses": {
+        "1st": "3+",
+        "2nd": "3+",
+        "3rd": null,
+        "4th": null
+      }
+    }
+  ]
+}
