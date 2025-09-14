@@ -1,48 +1,40 @@
-import { Router } from "express";
-import { z } from "zod";
-import { getOpenAI } from "../services/openai.js";
-import { initSSE, sendSSE, endSSE } from "../utils/sse.js";
+import express from "express";
+import OpenAI from "openai";
 
-export const router = Router();
-const ChatSchema = z.object({
-  message: z.string().min(1),
-  system: z.string().optional(),
-  history: z.array(z.object({
-    role: z.enum(["system","user","assistant"]),
-    content: z.string()
-  })).optional()
-});
+const router = express.Router();
+const openai = new OpenAI();
 
-router.post("/", async (req, res, next) => {
+router.post("/", async (req, res) => {
   try {
-    const body = ChatSchema.parse(req.body);
-    const messages = [];
-    if (body.system) messages.push({ role: "system", content: body.system });
-    if (Array.isArray(body.history)) messages.push(...body.history);
-    messages.push({ role: "user", content: body.message });
+    const { messages } = req.body;
 
-    const openai = getOpenAI();
-    const completion = await openai.chat.completions.create({ model: "gpt-4o-mini", messages });
-    res.json({ reply: completion.choices?.[0]?.message?.content ?? "" });
-  } catch (err) { next(err); }
-});
+    const stream = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages,
+      stream: true,
+    });
 
-router.post("/stream", async (req, res, next) => {
-  try {
-    const body = ChatSchema.parse(req.body);
-    const messages = [];
-    if (body.system) messages.push({ role: "system", content: body.system });
-    if (Array.isArray(body.history)) messages.push(...body.history);
-    messages.push({ role: "user", content: body.message });
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
 
-    const openai = getOpenAI();
-    const stream = await openai.chat.completions.create({ model: "gpt-4o-mini", messages, stream: true });
+    const pass = new PassThrough();
+    pass.pipe(res);
 
-    initSSE(res);
     for await (const chunk of stream) {
-      const token = chunk.choices?.[0]?.delta?.content || "";
-      if (token) sendSSE(res, token);
+      const content = chunk.choices[0]?.delta?.content || "";
+      if (content) {
+        pass.write(`data: ${JSON.stringify({ content })}\n\n`);
+        res.flush?.();
+      }
     }
-    endSSE(res);
-  } catch (err) { next(err); }
+
+    pass.write("data: [DONE]\n\n");
+    pass.end();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to stream response" });
+  }
 });
+
+export default router;

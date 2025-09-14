@@ -23,14 +23,16 @@ export async function streamChat({ message, onToken, onDone, useRag = false }) {
       if (!part.startsWith("data:")) continue;
       const data = part.slice(5).trim();
       if (data === "[DONE]") {
-        onDone?.({ reply: full, sources });
+        // Clean up spaces before punctuation and multiple spaces
+        let cleaned = full.replace(/\s+([.,:;!?()])/g, '$1').replace(/\s{2,}/g, ' ');
+        onDone?.({ reply: cleaned, sources });
         return;
       }
       try {
         const parsed = JSON.parse(data);
         if (parsed.sources) { sources = parsed.sources; continue; }
       } catch {
-        full += data;
+        full += (full && !full.endsWith(" ") ? " " : "") + data;
         onToken?.(full);
       }
     }

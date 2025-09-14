@@ -1,22 +1,19 @@
-import { Copy, ThumbsUp, ThumbsDown, Share2, RotateCw, MoreHorizontal } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+
+function finalizeText(text) {
+  return text
+    .replace(/\s+/g, " ")          // collapse multiple spaces
+    .replace(/\s([.,!?;:])/g, "$1") // remove spaces before punctuation
+    .replace(/\. \. /g, ". ")     // fix double dot artifacts
+    .trim();
+}
 
 export default function Message({ id, role, content, onCopy, onLike, onDislike, onShare, onResend, index }) {
-  const isUser = role === "user";
   return (
-    <div className={`message ${isUser ? "user" : "assistant"}`}>
+    <div className={`message ${role}`}>
       <div className="bubble">
-        {content}
+        <ReactMarkdown>{finalizeText(content)}</ReactMarkdown>
       </div>
-      {!isUser && (
-        <div className="actions">
-          <button className="icon-btn" title="Copy" onClick={onCopy}><Copy size={16} /></button>
-          <button className="icon-btn" title="Like" onClick={() => onLike(id)}><ThumbsUp size={16} /></button>
-          <button className="icon-btn" title="Dislike" onClick={() => onDislike(id)}><ThumbsDown size={16} /></button>
-          <button className="icon-btn" title="Share" onClick={onShare}><Share2 size={16} /></button>
-          <button className="icon-btn" title="Try again" onClick={() => onResend(index)}><RotateCw size={16} /></button>
-          <button className="icon-btn" title="More actions" onClick={() => alert("More actions coming soon")}><MoreHorizontal size={16} /></button>
-        </div>
-      )}
     </div>
   );
 }

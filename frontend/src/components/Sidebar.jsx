@@ -13,7 +13,7 @@ export default function Sidebar({ open, onClose, conversations, activeId, onSele
     return () => document.removeEventListener("click", onClick);
   }, [onClose]);
 
-  const filtered = (conversations || []).filter(c => (c.title || "").toLowerCase().includes(query.toLowerCase()));
+  const filtered = (Array.isArray(conversations) ? conversations : []).filter(c => (c.title || "").toLowerCase().includes(query.toLowerCase()));
 
   return (
     <div className={`sidebar-overlay ${open ? "open" : ""}`} ref={overlayRef}>
