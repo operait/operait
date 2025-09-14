@@ -14,7 +14,7 @@ export default function App() {
 
   async function loadConversations() {
     try {
-      const res = await fetch(`${API_BASE}/conversations`);
+      const res = await fetch(`${API_BASE}/api/conversations`);
       const data = await res.json();
       setConversations(data || []);
     } catch (e) {
