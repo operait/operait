@@ -1,0 +1,1 @@
+Operait Era with Supabase persistence. Configure .env with OPENAI and SUPABASE vars.
