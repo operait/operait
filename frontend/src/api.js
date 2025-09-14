@@ -1,4 +1,4 @@
-const API_BASE = "https://operait-backend.onrender.com"; // replace with your Render URL
+const API_BASE = "https://operait.onrender.com";
 
 export async function streamChat({ message, useRag = false, onToken, onDone }) {
   const endpoint = useRag
