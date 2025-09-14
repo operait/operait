@@ -70,7 +70,7 @@ export default function App() {
 
   async function sendFeedback(messageId, value) {
     try {
-      await fetch(`${API_BASE}/feedback", {
+      await fetch(`${API_BASE}/feedback`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messageId, value })
