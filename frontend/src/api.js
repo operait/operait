@@ -1,7 +1,7 @@
 import { API_BASE } from "./config";
 
 export async function streamChat({ message, onToken, onDone, useRag = false }) {
-  const endpoint = useRag ? `${API_BASE}/rag-chat/stream` : `${API_BASE}/chat/stream`;
+  const endpoint = useRag ? `${API_BASE}/rag-chat/stream` : `${API_BASE}/chat`;
   const res = await fetch(endpoint, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

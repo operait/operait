@@ -10,7 +10,7 @@ router.post("/", async (req, res) => {
     const { messages } = req.body;
 
     const stream = await openai.chat.completions.create({
-      model: "gpt-4.1-mini",
+      model: "gpt-4.1-mini",   // or gpt-4o-mini if limits allow
       messages,
       stream: true,
     });
@@ -33,7 +33,7 @@ router.post("/", async (req, res) => {
     pass.write("data: [DONE]\n\n");
     pass.end();
   } catch (err) {
-    console.error(err);
+    console.error("Chat streaming error:", err);
     res.status(500).json({ error: "Failed to stream response" });
   }
 });
