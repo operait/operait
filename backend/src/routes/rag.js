@@ -1,45 +1,53 @@
-import { Router } from "express";
-import { z } from "zod";
-import { getOpenAI } from "../services/openai.js";
-import { getSupabase } from "../services/supabase.js";
-import { initSSE, sendSSE, endSSE } from "../utils/sse.js";
+import express from "express";
+import fs from "fs";
+import OpenAI from "openai";
+import { createClient } from "@supabase/supabase-js";
 
-export const router = Router();
-const RagSchema = z.object({ message: z.string().min(1) });
+const router = express.Router();
 
-router.post("/stream", async (req, res, next) => {
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY
+);
+
+router.post("/", async (req, res) => {
+  const { question, tenantId } = req.body;
+  if (!tenantId) return res.status(400).json({ error: "Missing tenantId" });
+
   try {
-    const { message } = RagSchema.parse(req.body);
-    const openai = getOpenAI();
-
-    const embeddingResp = await openai.embeddings.create({ model: "text-embedding-3-small", input: message });
-    const queryEmbedding = embeddingResp.data[0].embedding;
-
-    const supabase = getSupabase();
-    let docs = [];
-    if (supabase) {
-      const { data, error } = await supabase.rpc("match_documents", {
-        query_embedding: queryEmbedding,
-        match_threshold: 0.8,
-        match_count: 3
-      });
-      if (!error) docs = data;
-    }
-
-    const context = docs?.map(d => d.content).join("\n---\n") || "";
-    const system = `You are ERA, answer using the following context:\n${context}`;
-
-    const stream = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [{ role: "system", content: system }, { role: "user", content: message }],
-      stream: true
+    const embeddingRes = await openai.embeddings.create({
+      model: "text-embedding-3-small",
+      input: question
     });
 
-    initSSE(res);
-    for await (const chunk of stream) {
-      const token = chunk.choices?.[0]?.delta?.content || "";
-      if (token) sendSSE(res, token);
-    }
-    endSSE(res, { sources: docs });
-  } catch (err) { next(err); }
+    const { data: chunks, error } = await supabase.rpc("match_documents", {
+      query_embedding: embeddingRes.data[0].embedding,
+      match_threshold: 0.75,
+      match_count: 5
+    });
+
+    if (error) throw error;
+
+    const filtered = chunks.filter(c => c.metadata?.tenant_id === tenantId);
+    const context = filtered.map(c => c.content).join("\\n---\\n");
+
+    const masterPrompt = fs.readFileSync("./prompts/master_prompt.yaml", "utf-8");
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: masterPrompt },
+        { role: "user", content: `Manager question: ${question}\\n\\nRelevant context:\\n${context}` }
+      ],
+      temperature: 0.2
+    });
+
+    res.json({ answer: completion.choices[0].message.content, sources: filtered });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
 });
+
+export { router };
