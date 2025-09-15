@@ -61,7 +61,7 @@ router.post("/", async (req, res) => {
     // 4. Generate response with retry
     const completion = await withRetry(() =>
       openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "gpt-4.1-mini",
         messages: [
           { role: "system", content: masterPrompt },
           { role: "user", content: `Manager question: ${question}\n\nRelevant context:\n${context}` }

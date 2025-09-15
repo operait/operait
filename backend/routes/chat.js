@@ -22,7 +22,7 @@ router.post("/", async (req, res, next) => {
     messages.push({ role: "user", content: body.message });
 
     const openai = getOpenAI();
-    const completion = await openai.chat.completions.create({ model: "gpt-4o-mini", messages });
+    const completion = await openai.chat.completions.create({ model: "gpt-4.1-mini", messages });
     res.json({ reply: completion.choices?.[0]?.message?.content ?? "" });
   } catch (err) { next(err); }
 });
@@ -36,7 +36,7 @@ router.post("/stream", async (req, res, next) => {
     messages.push({ role: "user", content: body.message });
 
     const openai = getOpenAI();
-    const stream = await openai.chat.completions.create({ model: "gpt-4o-mini", messages, stream: true });
+    const stream = await openai.chat.completions.create({ model: "gpt-4.1-mini", messages, stream: true });
 
     initSSE(res);
     for await (const chunk of stream) {

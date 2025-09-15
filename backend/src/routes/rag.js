@@ -35,7 +35,7 @@ router.post("/", async (req, res) => {
     const masterPrompt = fs.readFileSync("./prompts/master_prompt.yaml", "utf-8");
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-4.1-mini",
       messages: [
         { role: "system", content: masterPrompt },
         { role: "user", content: `Manager question: ${question}\\n\\nRelevant context:\\n${context}` }
