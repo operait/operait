@@ -1,53 +1,75 @@
 import express from "express";
 import fs from "fs";
-import OpenAI from "openai";
-import { createClient } from "@supabase/supabase-js";
+import { z } from "zod";
+import { getOpenAI } from "../services/openai.js";
+import { getSupabase } from "../services/supabase.js";
+import { initSSE, sendSSE, endSSE } from "../utils/sse.js";
 
-const router = express.Router();
+export const router = express.Router();
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
-);
-
-router.post("/", async (req, res) => {
-  const { question, tenantId } = req.body;
-  if (!tenantId) return res.status(400).json({ error: "Missing tenantId" });
-
-  try {
-    const embeddingRes = await openai.embeddings.create({
-      model: "text-embedding-3-small",
-      input: question
-    });
-
-    const { data: chunks, error } = await supabase.rpc("match_documents", {
-      query_embedding: embeddingRes.data[0].embedding,
-      match_threshold: 0.75,
-      match_count: 5
-    });
-
-    if (error) throw error;
-
-    const filtered = chunks.filter(c => c.metadata?.tenant_id === tenantId);
-    const context = filtered.map(c => c.content).join("\\n---\\n");
-
-    const masterPrompt = fs.readFileSync("./prompts/master_prompt.yaml", "utf-8");
-
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [
-        { role: "system", content: masterPrompt },
-        { role: "user", content: `Manager question: ${question}\\n\\nRelevant context:\\n${context}` }
-      ],
-      temperature: 0.2
-    });
-
-    res.json({ answer: completion.choices[0].message.content, sources: filtered });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
-  }
+const BodySchema = z.object({
+  tenantId: z.string().min(1).optional(), // optional for now
+  question: z.string().min(1).optional(),
+  message: z.string().min(1).optional()
 });
 
-export { router };
+async function withRetry(fn, retries=3, delay=1000){
+  let attempt=0;
+  while(attempt<retries){
+    try{ return await fn(); }
+    catch(err){
+      if(err?.status===429 && attempt<retries-1){
+        const wait = delay * Math.pow(2, attempt);
+        await new Promise(r=>setTimeout(r, wait));
+        attempt++;
+      } else { throw err; }
+    }
+  }
+}
+
+router.post("/", async (req, res, next) => {
+  try{
+    const body = BodySchema.parse(req.body);
+    const message = body.message || body.question;
+    if(!message) return res.status(400).json({ error: "Missing 'question' or 'message' in body" });
+
+    const openai = getOpenAI();
+    const embeddingResp = await withRetry(() => openai.embeddings.create({ model: "text-embedding-3-small", input: message }));
+    const queryEmbedding = embeddingResp.data[0].embedding;
+
+    const supabase = getSupabase();
+    let docs = [];
+    if (supabase) {
+      const { data, error } = await supabase.rpc("match_documents", {
+        query_embedding: queryEmbedding,
+        match_threshold: 0.75,
+        match_count: 5
+      });
+      if (!error) docs = data;
+    }
+
+    const context = docs?.map(d => d.content).join("\n---\n") || "";
+    const masterPrompt = fs.existsSync("./prompts/master_prompt.yaml") ? fs.readFileSync("./prompts/master_prompt.yaml","utf-8") : "";
+
+    const stream = await withRetry(() =>
+      openai.chat.completions.create({
+        model: "gpt-4.1-mini",
+        messages: [
+          { role: "system", content: masterPrompt || "You are ERA. Be concise and helpful." },
+          { role: "user", content: `Manager question: ${message}\n\nRelevant context:\n${context}` }
+        ],
+        stream: true
+      })
+    );
+
+    initSSE(res);
+    for await (const chunk of stream) {
+      const token = chunk.choices?.[0]?.delta?.content || "";
+      if (token) sendSSE(res, token);
+    }
+    endSSE(res, { sources: docs });
+  }catch(err){ next(err); }
+});
+
+// Keep the previous /stream path too for compatibility
+router.post("/stream", async (req,res,next)=>router.handle(req,res,next));

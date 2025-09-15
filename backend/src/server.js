@@ -18,6 +18,7 @@ app.get("/", (_req, res) => {
   res.type("text/plain").send("✅ Era backend with SSE+RAG is running");
 });
 
+// Mount under /api to match frontend
 app.use("/api/chat", chatRouter);
 app.use("/api/rag-chat", ragRouter);
 app.use("/api/conversations", conversationsRouter);
@@ -26,7 +27,8 @@ app.use((req, res) => res.status(404).json({ error: "Not Found", path: req.path 
 
 app.use((err, _req, res, _next) => {
   console.error(err);
-  res.status(500).json({ error: "Server Error", message: err.message });
+  const status = err.status || 500;
+  res.status(status).json({ error: "Server Error", message: err.message });
 });
 
 const port = process.env.PORT || 5000;
