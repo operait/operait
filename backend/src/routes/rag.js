@@ -49,7 +49,7 @@ router.post("/", async (req, res, next) => {
     }
 
     const context = docs?.map(d => d.content).join("\n---\n") || "";
-    const masterPrompt = fs.existsSync("./prompts/master_prompt.yaml") ? fs.readFileSync("./prompts/master_prompt.yaml","utf-8") : "";
+    const masterPrompt = fs.existsSync("../../prompts/master_prompt.yaml") ? fs.readFileSync("../../prompts/master_prompt.yaml","utf-8") : "";
 
     const completion = await withRetry(() =>
       openai.chat.completions.create({
