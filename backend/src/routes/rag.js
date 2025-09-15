@@ -1,5 +1,6 @@
 import express from "express";
 import fs from "fs";
+import yaml from "js-yaml";
 import { z } from "zod";
 import { getOpenAI } from "../services/openai.js";
 import { getSupabase } from "../services/supabase.js";
@@ -49,13 +50,29 @@ router.post("/", async (req, res, next) => {
     }
 
     const context = docs?.map(d => d.content).join("\n---\n") || "";
-    const masterPrompt = fs.existsSync("../../prompts/master_prompt.yaml") ? fs.readFileSync("../../prompts/master_prompt.yaml","utf-8") : "";
+    let masterPromptObj = {};
+    let masterPromptText = "You are ERA. Be concise and helpful.";
+    const promptPath = process.cwd() + "/prompts/master_prompt.yaml";
+    if (fs.existsSync(promptPath)) {
+      const yamlText = fs.readFileSync(promptPath, "utf-8");
+      masterPromptObj = yaml.load(yamlText);
+      // Build a rich system prompt from YAML fields
+      masterPromptText = [
+        masterPromptObj.system?.role,
+        masterPromptObj.goals ? `Goals: ${masterPromptObj.goals.join(" ")}` : "",
+        masterPromptObj.guardrails ? `Guardrails: ${masterPromptObj.guardrails.join(" ")}` : "",
+        masterPromptObj.company_context ? `Company: ${JSON.stringify(masterPromptObj.company_context)}` : "",
+        masterPromptObj.expertise ? `Expertise: ${masterPromptObj.expertise.join(" ")}` : "",
+        masterPromptObj.response_style ? `Response Style: ${JSON.stringify(masterPromptObj.response_style)}` : "",
+        masterPromptObj.rules_of_engagement ? `Rules: ${masterPromptObj.rules_of_engagement.join(" ")}` : ""
+      ].filter(Boolean).join("\n\n");
+    }
 
     const completion = await withRetry(() =>
       openai.chat.completions.create({
         model: "gpt-4.1-mini",
         messages: [
-          { role: "system", content: masterPrompt || "You are ERA. Be concise and helpful." },
+          { role: "system", content: masterPromptText },
           { role: "user", content: `Manager question: ${message}\n\nRelevant context:\n${context}` }
         ]
       })
