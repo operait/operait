@@ -34,22 +34,32 @@ router.post("/", async (req, res, next) => {
     const message = body.message || body.question;
     if(!message) return res.status(400).json({ error: "Missing 'question' or 'message' in body" });
 
-    const openai = getOpenAI();
-    const embeddingResp = await withRetry(() => openai.embeddings.create({ model: "text-embedding-3-small", input: message }));
-    const queryEmbedding = embeddingResp.data[0].embedding;
-
-    const supabase = getSupabase();
-    let docs = [];
-    if (supabase) {
-      const { data, error } = await supabase.rpc("match_documents", {
-        query_embedding: queryEmbedding,
-        match_threshold: 0.75,
-        match_count: 5
-      });
-      if (!error) docs = data;
+    // Load all tenant data files (any type) as context
+    const dataDir = process.cwd() + "/data/fitness_connection/";
+    const files = fs.readdirSync(dataDir).filter(f => !f.startsWith("."));
+    let context = "";
+    for (const file of files) {
+      const filePath = dataDir + file;
+      if (fs.existsSync(filePath)) {
+        try {
+          // Try reading as utf-8, fallback to binary if error
+          let raw = "";
+          try {
+            raw = fs.readFileSync(filePath, "utf-8");
+          } catch (e) {
+            // If not utf-8, read as binary and base64 encode
+            raw = fs.readFileSync(filePath).toString('base64');
+            raw = `[base64-encoded] ${raw}`;
+          }
+          context += `\n---\n[${file}]\n` + raw;
+        } catch (e) {
+          context += `\n[${file}] (error reading file)`;
+        }
+      } else {
+        context += `\n[${file}] (not found)`;
+      }
     }
-
-    const context = docs?.map(d => d.content).join("\n---\n") || "";
+    let docs = files.map(f => ({ file: f })); // For logging compatibility
     let masterPromptObj = {};
     let masterPromptText = "You are ERA. Be concise and helpful.";
     const promptPath = process.cwd() + "/prompts/master_prompt.yaml";
@@ -77,19 +87,19 @@ router.post("/", async (req, res, next) => {
   // Log what is being sent to GPT (after context and prompt construction)
   console.log("SYSTEM PROMPT:\n", masterPromptText);
   console.log("USER MESSAGE:\n", message);
-  console.log("RELEVANT CONTEXT CHUNKS:\n", docs);
+  console.log("RAW TENANT DATA CONTEXT:\n", context);
 
     const completion = await withRetry(() =>
       openai.chat.completions.create({
         model: "gpt-4.1-mini",
         messages: [
           { role: "system", content: masterPromptText },
-          { role: "user", content: `Manager question: ${message}\n\nRelevant context:\n${context}` }
+          { role: "user", content: `Manager question: ${message}\n\nTenant data context:\n${context}` }
         ]
       })
     );
     const reply = completion.choices?.[0]?.message?.content || "";
-    res.json({ reply, sources: docs });
+    res.json({ reply, sources: files });
   }catch(err){ next(err); }
 });
 
