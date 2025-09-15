@@ -27,22 +27,4 @@ router.post("/", async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post("/stream", async (req, res, next) => {
-  try {
-    const body = ChatSchema.parse(req.body);
-    const messages = [];
-    if (body.system) messages.push({ role: "system", content: body.system });
-    if (Array.isArray(body.history)) messages.push(...body.history);
-    messages.push({ role: "user", content: body.message });
 
-    const openai = getOpenAI();
-    const stream = await openai.chat.completions.create({ model: "gpt-3.5-turbo", messages, stream: true });
-
-    initSSE(res);
-    for await (const chunk of stream) {
-      const token = chunk.choices?.[0]?.delta?.content || "";
-      if (token) sendSSE(res, token);
-    }
-    endSSE(res);
-  } catch (err) { next(err); }
-});

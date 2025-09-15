@@ -21,31 +21,14 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ error: "Request body must include 'messages' (array) or 'message' (string)." });
     }
 
-    const stream = await openai.chat.completions.create({
-      model: "gpt-4.1-mini",   // fallback-friendly, can adjust to gpt-3.5-turbo if needed
-      messages,
-      stream: true,
-    });
-
-    res.setHeader("Content-Type", "text/event-stream");
-    res.setHeader("Cache-Control", "no-cache");
-    res.setHeader("Connection", "keep-alive");
-
-    const pass = new PassThrough();
-    pass.pipe(res);
-
-    for await (const chunk of stream) {
-      const content = chunk.choices[0]?.delta?.content || "";
-      if (content) {
-        pass.write(`data: ${JSON.stringify({ content })}
 
 `);
-        res.flush?.();
-      }
-    }
-
-    pass.write("data: [DONE]\n\n");
-    pass.end();
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4.1-mini",
+      messages
+    });
+    const reply = completion.choices?.[0]?.message?.content || "";
+    res.json({ reply });
   } catch (err) {
     console.error("Chat streaming error:", err);
     if (err.status === 429) {

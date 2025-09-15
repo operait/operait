@@ -51,23 +51,17 @@ router.post("/", async (req, res, next) => {
     const context = docs?.map(d => d.content).join("\n---\n") || "";
     const masterPrompt = fs.existsSync("./prompts/master_prompt.yaml") ? fs.readFileSync("./prompts/master_prompt.yaml","utf-8") : "";
 
-    const stream = await withRetry(() =>
+    const completion = await withRetry(() =>
       openai.chat.completions.create({
         model: "gpt-4.1-mini",
         messages: [
           { role: "system", content: masterPrompt || "You are ERA. Be concise and helpful." },
           { role: "user", content: `Manager question: ${message}\n\nRelevant context:\n${context}` }
-        ],
-        stream: true
+        ]
       })
     );
-
-    initSSE(res);
-    for await (const chunk of stream) {
-      const token = chunk.choices?.[0]?.delta?.content || "";
-      if (token) sendSSE(res, token);
-    }
-    endSSE(res, { sources: docs });
+    const reply = completion.choices?.[0]?.message?.content || "";
+    res.json({ reply, sources: docs });
   }catch(err){ next(err); }
 });
 

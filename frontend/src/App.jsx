@@ -41,31 +41,32 @@ export default function App() {
   const userMsg = { id: Date.now().toString(), role: "user", content: text };
   setMessages((prev) => [...prev, userMsg]);
 
-  // Add a placeholder assistant message we can stream into
-  const placeholderId = "a-" + (Date.now()+1);
-  setMessages((prev) => [...prev, { id: placeholderId, role: "assistant", content: "" }]);
-
   setLoading(true);
   try {
-    await streamChat({
-      message: text,
-      onToken: (partial) => {
-        // Update the placeholder message content
-        setMessages((prev) => prev.map(m => m.id === placeholderId ? { ...m, content: partial } : m));
-      },
-      onDone: async ({ reply }) => {
-        // Final content already set via onToken
-        // Optionally refresh conversations
-        try { await loadConversations(); } catch {}
-      }
+    const res = await fetch(`${API_BASE}/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: text }),
     });
+
+    const data = await res.json();
+
+    // Add assistant reply
+    const replyMsg = {
+      id: "a-" + (Date.now() + 1),
+      role: "assistant",
+      content: data.reply || "(no response)",
+    };
+    setMessages((prev) => [...prev, replyMsg]);
+
+    // Optionally refresh conversations
+    try { await loadConversations(); } catch {}
   } catch (e) {
     console.error("sendMessage error:", e);
   } finally {
     setLoading(false);
   }
 }
-
 
 
   async function sendFeedback(messageId, value) {
