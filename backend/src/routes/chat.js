@@ -1,8 +1,9 @@
 import express from "express";
 import OpenAI from "openai";
+import { PassThrough } from "stream";
 
 const router = express.Router();
-const openai = new OpenAI();
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 router.post("/", async (req, res) => {
   try {
@@ -37,4 +38,4 @@ router.post("/", async (req, res) => {
   }
 });
 
-export default router;
+export { router };
