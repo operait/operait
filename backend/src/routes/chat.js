@@ -21,8 +21,6 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ error: "Request body must include 'messages' (array) or 'message' (string)." });
     }
 
-
-`);
     const completion = await openai.chat.completions.create({
       model: "gpt-4.1-mini",
       messages
