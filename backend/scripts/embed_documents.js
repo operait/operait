@@ -66,31 +66,46 @@ async function processFile(filePath, tenantId) {
 
   if (docError) throw docError;
 
-  // Chunk + embed
-  const chunks = chunkText(JSON.stringify(data, null, 2));
-  for (let i = 0; i < chunks.length; i++) {
-    const chunk = chunks[i];
-    const embeddingRes = await withRetry(() =>
-      openai.embeddings.create({
-        model: "text-embedding-3-small",
-        input: chunk
-      })
-    );
+  // Chunk and embed each top-level key (tab/section) separately
+  let totalChunks = 0;
+  for (const [section, sectionData] of Object.entries(data)) {
+    // If sectionData is not an object, treat as string
+    let sectionText;
+    if (typeof sectionData === "string") {
+      sectionText = sectionData;
+    } else {
+      sectionText = JSON.stringify(sectionData, null, 2);
+    }
+    const chunks = chunkText(sectionText);
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i];
+      const embeddingRes = await withRetry(() =>
+        openai.embeddings.create({
+          model: "text-embedding-3-small",
+          input: chunk
+        })
+      );
 
-    await supabase.from("document_chunks").insert({
-      document_id: doc.id,
-      chunk_index: i,
-      content: chunk,
-      embedding: embeddingRes.data[0].embedding,
-      tokens: encode(chunk).length,
-      metadata: { tenant_id: tenantId }
-    });
+      await supabase.from("document_chunks").insert({
+        document_id: doc.id,
+        chunk_index: totalChunks,
+        content: chunk,
+        embedding: embeddingRes.data[0].embedding,
+        tokens: encode(chunk).length,
+        metadata: {
+          tenant_id: tenantId,
+          file_name: fileName,
+          section: section
+        }
+      });
 
-    // Throttle between requests
-    const throttle = parseInt(process.env.THROTTLE_MS || "200", 10);
-    if (throttle > 0) await sleep(throttle);
+      // Throttle between requests
+      const throttle = parseInt(process.env.THROTTLE_MS || "200", 10);
+      if (throttle > 0) await sleep(throttle);
+      totalChunks++;
+    }
   }
-  console.log(`✅ Uploaded ${fileName} (${chunks.length} chunks) for tenant ${tenantId}`);
+  console.log(`✅ Uploaded ${fileName} (${totalChunks} chunks, by section) for tenant ${tenantId}`);
 }
 
 async function run() {
