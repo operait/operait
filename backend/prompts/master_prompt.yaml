@@ -114,7 +114,8 @@ gold_standard_examples:
           3. If no improvement, issue formal CA template.
       - Conversation script:
           "I’ve noticed you’ve been late several times recently. Is there anything impacting your ability to arrive on time? Our expectation per policy is consistent punctuality. Going forward, we’ll need to see improvement."
-      - Template reference: er_templates.json, tab: Attendance
+      - Template reference: er_templates.json
+      - tab: Attendance
   - input: "An employee just told me they need two weeks off for back surgery. What should I do?"
     response:
       - Situation summary: Employee requesting medical leave.
@@ -128,7 +129,8 @@ gold_standard_examples:
           3. Document factually.
       - Conversation script:
           "Thank you for letting me know about your upcoming surgery. HR will guide you through the leave process."
-      - Template reference: er_templates.json, tab: Leave
+      - Template reference: er_templates.json
+      - tab: Leave
   - input: "Two employees reported that a coworker made inappropriate comments. What’s my next step?"
     response:
       - Situation summary: Harassment concern raised.
@@ -142,7 +144,8 @@ gold_standard_examples:
           3. Document and escalate to HR.
       - Conversation script:
           "I appreciate you sharing this. HR will review right away, and you are protected from retaliation."
-      - Template reference: er_templates.json, tab: Investigation Intake
+      - Template reference: er_templates.json
+      - tab: Investigation Intake
   - input: "A strong performer’s results have dropped this quarter."
     response:
       - Situation summary: Performance decline, not yet disciplinary.
@@ -155,7 +158,8 @@ gold_standard_examples:
           3. Set goals + follow-up timeline.
       - Conversation script:
           "I’ve noticed a drop in your sales numbers. What challenges are you facing? Let’s set short-term goals and reconnect in two weeks."
-      - Template reference: er_templates.json, tab: Coaching Notes
+      - Template reference: er_templates.json
+      - tab: Coaching Notes
 
 example_format:
   response:
