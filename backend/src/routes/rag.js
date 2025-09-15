@@ -29,6 +29,7 @@ async function withRetry(fn, retries=3, delay=1000){
 }
 
 router.post("/", async (req, res, next) => {
+    console.log("Posting!!!");
   try{
     const body = BodySchema.parse(req.body);
     const message = body.message || body.question;
@@ -42,16 +43,48 @@ router.post("/", async (req, res, next) => {
       const filePath = dataDir + file;
       if (fs.existsSync(filePath)) {
         try {
-          // Try reading as utf-8, fallback to binary if error
-          let raw = "";
-          try {
-            raw = fs.readFileSync(filePath, "utf-8");
-          } catch (e) {
-            // If not utf-8, read as binary and base64 encode
-            raw = fs.readFileSync(filePath).toString('base64');
-            raw = `[base64-encoded] ${raw}`;
+          let extracted = "";
+          if (file.endsWith('.pdf')) {
+            // PDF extraction
+            const pdfjsLib = require('pdf-parse');
+            const dataBuffer = fs.readFileSync(filePath);
+            try {
+              const pdfData = await pdfjsLib(dataBuffer);
+              extracted = pdfData.text;
+            } catch (e) {
+              extracted = '[PDF extraction error]';
+            }
+          } else if (file.endsWith('.docx')) {
+            // DOCX extraction using mammoth
+            const mammoth = require('mammoth');
+            try {
+              const result = await mammoth.extractRawText({ path: filePath });
+              extracted = result.value;
+            } catch (e) {
+              extracted = '[DOCX extraction error]';
+            }
+  // NOTE: The xlsx package has a known high-severity vulnerability (Prototype Pollution, ReDoS).
+  // Only use it on trusted files from your own tenant data folder. Do not process untrusted user uploads.
+          } else if (file.endsWith('.xlsx')) {
+            // XLSX extraction
+            const XLSX = require('xlsx');
+            try {
+              const workbook = XLSX.readFile(filePath);
+              extracted = Object.keys(workbook.Sheets).map(sheetName => {
+                return `Sheet: ${sheetName}\n` + XLSX.utils.sheet_to_csv(workbook.Sheets[sheetName]);
+              }).join('\n');
+            } catch (e) {
+              extracted = '[XLSX extraction error]';
+            }
+          } else {
+            // Try reading as utf-8 text
+            try {
+              extracted = fs.readFileSync(filePath, "utf-8");
+            } catch (e) {
+              extracted = '[Unreadable file type]';
+            }
           }
-          context += `\n---\n[${file}]\n` + raw;
+          context += `\n---\n[${file}]\n` + extracted;
         } catch (e) {
           context += `\n[${file}] (error reading file)`;
         }
@@ -60,28 +93,10 @@ router.post("/", async (req, res, next) => {
       }
     }
     let docs = files.map(f => ({ file: f })); // For logging compatibility
-    let masterPromptObj = {};
-    let masterPromptText = "You are ERA. Be concise and helpful.";
     const promptPath = process.cwd() + "/prompts/master_prompt.yaml";
-    let formattingInstructions = `\n\nAlways answer with:\n(a) Policy Reference,\n(b) Step-by-Step Guidance,\n(c) Sample Template Language,\n(d) When to Escalate.\nUse bullet points, clear sections, and cite sources/templates.\nStructure your response as follows:\n- Situation summary:\n- Key risks/compliance notes:\n- Recommended steps (with reasoning):\n- Conversation script:\n- Dialogue script/decision matrix (common employee responses & manager follow-ups):\n- Display relevant templated response to copy and paste from: ("er_templates.json")`;
-    let goldExample = `\n\nExample:\nSituation summary: Manager is considering a formal corrective action for repeated tardiness.\nKey risks/compliance notes:\n• Attendance/tardiness must be documented consistently across all employees.\n• Confirm whether lateness is tied to protected reasons (e.g., FMLA, ADA, state leave).\n• Managers should not issue corrective action without verifying with official templates.\nRecommended steps (with reasoning):\n1. Review timekeeping records to ensure accurate documentation.\n2. Have a coaching conversation first (progressive discipline).\n3. If no improvement, issue formal Corrective Action using the official template.\nConversation script:\n'I’ve noticed you’ve been late several times recently. Is there anything impacting your ability to arrive on time? Our expectation per policy is consistent punctuality. Going forward, we’ll need to see improvement in this area.'\nDisplay relevant templated response to copy and paste from Corrective Action template ("er_templates.json", tab: Attendance).`;
+    let masterPromptText;
     if (fs.existsSync(promptPath)) {
-      const yamlText = fs.readFileSync(promptPath, "utf-8");
-      masterPromptObj = yaml.load(yamlText);
-      // Build a rich system prompt from YAML fields
-      masterPromptText = [
-        masterPromptObj.system?.role,
-        masterPromptObj.goals ? `Goals: ${masterPromptObj.goals.join(" ")}` : "",
-        masterPromptObj.guardrails ? `Guardrails: ${masterPromptObj.guardrails.join(" ")}` : "",
-        masterPromptObj.company_context ? `Company: ${JSON.stringify(masterPromptObj.company_context)}` : "",
-        masterPromptObj.expertise ? `Expertise: ${masterPromptObj.expertise.join(" ")}` : "",
-        masterPromptObj.response_style ? `Response Style: ${JSON.stringify(masterPromptObj.response_style)}` : "",
-        masterPromptObj.rules_of_engagement ? `Rules: ${masterPromptObj.rules_of_engagement.join(" ")}` : "",
-        formattingInstructions,
-        goldExample
-      ].filter(Boolean).join("\n\n");
-    } else {
-      masterPromptText += formattingInstructions + goldExample;
+      masterPromptText = fs.readFileSync(promptPath, "utf-8");
     }
 
   // Log what is being sent to GPT (after context and prompt construction)
