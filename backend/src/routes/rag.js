@@ -29,10 +29,6 @@ async function withRetry(fn, retries=3, delay=1000){
 }
 
 router.post("/", async (req, res, next) => {
-  // Log what is being sent to GPT
-  console.log("SYSTEM PROMPT:\n", masterPromptText);
-  console.log("USER MESSAGE:\n", message);
-  console.log("RELEVANT CONTEXT CHUNKS:\n", docs);
   try{
     const body = BodySchema.parse(req.body);
     const message = body.message || body.question;
@@ -77,6 +73,11 @@ router.post("/", async (req, res, next) => {
     } else {
       masterPromptText += formattingInstructions + goldExample;
     }
+
+  // Log what is being sent to GPT (after context and prompt construction)
+  console.log("SYSTEM PROMPT:\n", masterPromptText);
+  console.log("USER MESSAGE:\n", message);
+  console.log("RELEVANT CONTEXT CHUNKS:\n", docs);
 
     const completion = await withRetry(() =>
       openai.chat.completions.create({
