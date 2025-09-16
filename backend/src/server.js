@@ -7,6 +7,7 @@ import { router as ragRouter } from "./routes/rag.js";
 import { router as conversationsRouter } from "./routes/conversations.js";
 
 dotenv.config();
+console.log("OPENAI_API_KEY:", process.env.OPENAI_API_KEY);
 const app = express();
 app.set("trust proxy", true);
 

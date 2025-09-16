@@ -1,41 +1,85 @@
 import express from "express";
-import OpenAI from "openai";
-import { PassThrough } from "stream";
+import fs from "fs";
+import path from "path";
+import { getOpenAI } from "../services/openai.js";
+import { extractTextFromFile } from "../utils/fileExtractor.js";
 
-const router = express.Router();
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+export const router = express.Router();
+const openai = getOpenAI();
 
-router.post("/", async (req, res) => {
+async function withRetry(fn, retries = 3, delay = 1000) {
+  let attempt = 0;
+  while (attempt < retries) {
+    try {
+      return await fn();
+    } catch (err) {
+      if (err?.status === 429 && attempt < retries - 1) {
+        const wait = delay * Math.pow(2, attempt);
+        await new Promise((r) => setTimeout(r, wait));
+        attempt++;
+      } else {
+        throw err;
+      }
+    }
+  }
+}
+
+router.post("/", async (req, res, next) => {
   try {
-    let { messages, message } = req.body;
+    const { message } = req.body;
 
-    // Normalize input: support both "message" (string) and "messages" (array)
-    if (!messages && message) {
-      messages = [
-        { role: "system", content: "You are ERA, an AI-powered Employee Relations coach." },
-        { role: "user", content: message }
-      ];
+    if (!message) {
+      return res
+        .status(400)
+        .json({ error: "Request body must include 'message' (string)." });
     }
 
-    if (!Array.isArray(messages)) {
-      return res.status(400).json({ error: "Request body must include 'messages' (array) or 'message' (string)." });
+    // Tenant data folder
+    const dataDir = path.join(process.cwd(), "data/fitness_connection/");
+    const files = fs.readdirSync(dataDir).filter((f) => !f.startsWith("."));
+
+    let context = "";
+
+    for (const file of files) {
+      try {
+        const filePath = path.join(dataDir, file);
+        const extracted = await extractTextFromFile(filePath);
+        if (extracted && extracted.trim().length > 0) {
+          context += `\n---\n[${file}]\n${extracted}`;
+        }
+      } catch (err) {
+        console.warn(`Failed to extract ${file}:`, err.message);
+      }
     }
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4.1-mini",
-      messages
-    });
+    // ✅ Load master prompt
+    const promptPath = path.join(process.cwd(), "prompts/master_prompt.yaml");
+    let masterPromptText = "You are ERA, an AI-powered Employee Relations coach.";
+    if (fs.existsSync(promptPath)) {
+      masterPromptText = fs.readFileSync(promptPath, "utf-8");
+    }
+
+    // Send to OpenAI
+    const completion = await withRetry(() =>
+      openai.chat.completions.create({
+        model: "gpt-4.1-mini",
+        messages: [
+          { role: "system", content: masterPromptText },
+          {
+            role: "user",
+            content: `Manager question: ${message}\n\nTenant data context:\n${context}\n\n⚠️ IMPORTANT: Format the answer in strict Markdown.`,
+          },
+        ],
+      })
+    );
+
+    console.log("SYSTEM PROMPT:\n", masterPromptText);
+    console.log("USER MESSAGE:\n", message);
+    console.log("RAW TENANT DATA CONTEXT:\n", context);
+
     const reply = completion.choices?.[0]?.message?.content || "";
     res.json({ reply });
   } catch (err) {
-    console.error("Chat streaming error:", err);
-    if (err.status === 429) {
-      return res.status(429).json({
-        error: "ERA is rate-limited by OpenAI. Please retry in a few seconds."
-      });
-    }
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 });
-
-export { router };

@@ -100,9 +100,9 @@ router.post("/", async (req, res, next) => {
     }
 
   // Log what is being sent to GPT (after context and prompt construction)
-  console.log("SYSTEM PROMPT:\n", masterPromptText);
+  //console.log("SYSTEM PROMPT:\n", masterPromptText);
   console.log("USER MESSAGE:\n", message);
-  console.log("RAW TENANT DATA CONTEXT:\n", context);
+  //console.log("RAW TENANT DATA CONTEXT:\n", context);
 
     const completion = await withRetry(() =>
       openai.chat.completions.create({
