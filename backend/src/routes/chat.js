@@ -26,7 +26,8 @@ async function withRetry(fn, retries = 3, delay = 1000) {
 
 router.post("/", async (req, res, next) => {
   try {
-    const { message } = req.body;
+    // Expect the new message and the conversation history from the client
+    const { message, history = [] } = req.body;
 
     if (!message) {
       return res
@@ -52,30 +53,36 @@ router.post("/", async (req, res, next) => {
       }
     }
 
-    // ✅ Load master prompt
+    // Load master prompt
     const promptPath = path.join(process.cwd(), "prompts/master_prompt.yaml");
     let masterPromptText = "You are ERA, an AI-powered Employee Relations coach.";
     if (fs.existsSync(promptPath)) {
       masterPromptText = fs.readFileSync(promptPath, "utf-8");
     }
 
+    // Construct the full message history for the API call
+    const messages = [
+      { role: "system", content: masterPromptText },
+      // Spread the previous messages from the client
+      ...history,
+      // Add the new user message
+      {
+        role: "user",
+        content: `Manager question: ${message}\n\nTenant data context:\n${context}\n\n⚠️ IMPORTANT: Format the answer in strict Markdown.`,
+      },
+    ];
+
     // Send to OpenAI
     const completion = await withRetry(() =>
       openai.chat.completions.create({
         model: "gpt-4.1-mini",
-        messages: [
-          { role: "system", content: masterPromptText },
-          {
-            role: "user",
-            content: `Manager question: ${message}\n\nTenant data context:\n${context}\n\n⚠️ IMPORTANT: Format the answer in strict Markdown.`,
-          },
-        ],
+        messages: messages,
       })
     );
 
-    console.log("SYSTEM PROMPT:\n", masterPromptText);
-    console.log("USER MESSAGE:\n", message);
-    console.log("RAW TENANT DATA CONTEXT:\n", context);
+    // console.log("SYSTEM PROMPT:\n", masterPromptText);
+    // console.log("USER MESSAGE:\n", message);
+    // console.log("RAW TENANT DATA CONTEXT:\n", context);
 
     const reply = completion.choices?.[0]?.message?.content || "";
     res.json({ reply });
